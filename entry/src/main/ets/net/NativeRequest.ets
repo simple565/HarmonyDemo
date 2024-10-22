@@ -5,6 +5,7 @@ import { http } from '@kit.NetworkKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 
 export class NativeRequest implements IRequest {
+  private readonly SUCCESS_CODE = 0
   baseUrl: string
 
   constructor(baseUrl: string) {
@@ -12,8 +13,7 @@ export class NativeRequest implements IRequest {
   }
 
   request<T>(api: Api): Promise<Response<T>> {
-    const instance = http.createHttp()
-
+    const httpRequest = http.createHttp()
     const options: http.HttpRequestOptions = {
       header: { 'Content-Type': 'application/json' },
       method: api.method,
@@ -21,22 +21,16 @@ export class NativeRequest implements IRequest {
       expectDataType: http.HttpDataType.OBJECT
     }
     let url = api.getFullUrl(this.baseUrl)
-    return instance.request(url, options).then((response) => {
-      if (response.result) {
-        const result = response.result as Response<T>
-        if (result.isSuccess()) {
-          return result
-        }
-        if (result.needUserLogin()) {
-          return Promise.reject('用户未登录或登录信息已过期')
-        }
+    return httpRequest.request(url, options).then((response) => {
+      if (response.result && response.responseCode === this.SUCCESS_CODE) {
+        return response.result as Response<T>
       }
       return Promise.reject(response.result)
     }).catch((err: BusinessError) => {
       console.log(`request ${url} error code ${err.code} msg ${err.message}`)
       return Promise.reject(err)
     }).finally(() => {
-      instance.destroy()
+      httpRequest.destroy()
     })
   }
 }

@@ -17,7 +17,6 @@ export class Api {
     let fullUrl = baseUrl + this.path
     if (this.method === http.RequestMethod.GET && this.params) {
       const paramArray = Object.keys(this.params)
-        //.filter(key => (this.params as HttpRequestParams)[key] !== undefined)
         .map(key => `${key}=${(this.params as HttpRequestParams)[key]}`)
       fullUrl += `?${paramArray.join('&')}`
     }
