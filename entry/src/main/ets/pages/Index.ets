@@ -1,34 +1,36 @@
-import { Api } from '../net/Api';
-import { http } from '@kit.NetworkKit';
 import { NativeRequest } from '../net/NativeRequest';
 import { IRequest } from '../net/IRequest';
+import { UiConstants } from '../constants/UiConstants';
+import { router } from '@kit.ArkUI';
 
 export const request: IRequest = new NativeRequest('https://www.wanandroid.com')
 
 @Entry
 @Component
 struct Index {
-  @State message: string = 'Hello World';
-
-  onPageShow(): void {
-    let bannerApi = new Api(http.RequestMethod.GET, '/banner/json')
-    request.request<string>(bannerApi).then((res) => {
-      console.log(JSON.stringify(res.data))
-    })
-  }
+  @State curPage: number = 0
+  @State demoPagePath: string[] = ['pages/RefreshListPage']
+  maxPage: number = 2
 
   build() {
-    RelativeContainer() {
-      Text(this.message)
-        .id('HelloWorld')
-        .fontSize(50)
-        .fontWeight(FontWeight.Bold)
-        .alignRules({
-          center: { anchor: '__container__', align: VerticalAlign.Center },
-          middle: { anchor: '__container__', align: HorizontalAlign.Center }
-        })
-    }
-    .height('100%')
-    .width('100%')
+    List() {
+      ForEach(this.demoPagePath, (item: string) => {
+        ListItem() {
+          Row() {
+            Text(item)
+              .layoutWeight(1)
+          }
+          .height(UiConstants.PRESENT_10)
+          .backgroundColor($r('sys.color.ohos_id_container_color'))
+          .borderRadius(10)
+          .margin(10)
+          .padding(10)
+          .onClick(() => {
+            router.pushUrl({ url: item })
+          })
+        }
+      })
+    }.width(UiConstants.PRESENT_100)
+    .height(UiConstants.PRESENT_100)
   }
 }
