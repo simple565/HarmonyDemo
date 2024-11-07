@@ -9,7 +9,7 @@ export const request: IRequest = new NativeRequest('https://www.wanandroid.com')
 @Component
 struct Index {
   @State curPage: number = 0
-  @State demoPagePath: string[] = ['pages/RefreshListPage']
+  @State demoPagePath: string[] = ['pages/RefreshListPage', 'pages/PreferencePage']
   maxPage: number = 2
 
   build() {
@@ -32,5 +32,9 @@ struct Index {
       })
     }.width(UiConstants.PRESENT_100)
     .height(UiConstants.PRESENT_100)
+  }
+
+  private login() {
+
   }
 }
