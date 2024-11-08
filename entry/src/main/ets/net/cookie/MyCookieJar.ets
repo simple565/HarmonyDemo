@@ -1,24 +1,49 @@
 import { Log } from '../../utils/HiLogUtil';
 import Cookie from './Cookie';
 import CookieJar from './CookieJar';
+import { preferences } from '@kit.ArkData';
 
 export default class MyCookieJar implements CookieJar {
-  private static TAG = "MyCookieJar"
+  private readonly TAG = "MyCookieJar"
+  private readonly STORE_NAME = 'MyCookieStore'
   private cache: Cookie[] = []
+  private store: preferences.Preferences
 
-  saveFromResponse(url: string, cookies: string): void {
+  constructor() {
+    this.store = preferences.getPreferencesSync(getContext(), {
+      name: this.STORE_NAME
+    })
+    const cacheStr = this.store.getSync(this.TAG, '') as string
+    if (cacheStr.length != 0) {
+      this.cache = JSON.parse(cacheStr)
+    }
+    Log.d(this.TAG, `init finish cache size ${this.cache.length}`)
+  }
+
+  async saveFromResponse(url: string, cookies: string): Promise<void> {
     // 对url进行判断，如只有登录的url才需要保存cookie，退出的url需要清空当前cookie
+    if (!url.includes('/user/login?')) {
+      return new Promise<void>(() => {}).then()
+    }
     this.cache = this.string2Cookie(cookies)
-    Log.d('saveFromResponse', `parse result ${this.cache.length}`)
+    Log.d(this.TAG, `saveFromResponse: parse result ${this.cache.length}`)
     // 持久化操作
+    this.store.putSync(this.TAG, JSON.stringify(this.cache))
+    Log.d(this.TAG, 'saveFromResponse: write cookie to preferences')
+    await this.store.flush()
+    Log.d(this.TAG, 'saveFromResponse: flush preferences')
   }
 
   loadForRequest(url: string): string {
     // 对url进行判断，如登录的url不需要传递cookie
+    if (url.includes('/user/login?')) {
+      return ''
+    }
     const curTimestamp = Date.now() / 1000
+    Log.d(this.TAG, `loadForRequest: current timestamp ${curTimestamp}`)
     const validCookies: Cookie[] = []
     this.cache.forEach((cookie) => {
-      Log.d('loadForRequest', `current timestamp ${curTimestamp} cookie expire time ${cookie.expiresAt}`)
+      Log.d(this.TAG, `loadForRequest: ${JSON.stringify(cookie)}`)
       if (cookie.expiresAt >= curTimestamp) {
         validCookies.push(cookie)
       }
@@ -27,9 +52,9 @@ export default class MyCookieJar implements CookieJar {
       return ''
     }
     const result = validCookies.map((cookie) => {
-      `${cookie.name}=${cookie.value}`
+      return `${cookie.name}=${cookie.value}`
     }).join('; ')
-    Log.d('loadForRequest', result)
+    Log.d(this.TAG, `loadForRequest: ${result}`)
     return result
   }
 

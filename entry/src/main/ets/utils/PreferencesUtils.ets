@@ -1,9 +1,13 @@
 import { preferences } from '@kit.ArkData';
+import { JSON } from '@kit.ArkTS';
+import { Log } from './HiLogUtil';
+import json from '@ohos.util.json';
 
 export default class PreferencesUtils {
+  private readonly TAG = 'PreferencesUtils'
   private readonly PREFERENCES_NAME: string = 'preferences'
   private static instance: PreferencesUtils
-  userPreferences: preferences.Preferences
+  private userPreferences: preferences.Preferences
 
   private constructor(context: Context) {
     this.userPreferences = preferences.getPreferencesSync(context, {
@@ -22,8 +26,9 @@ export default class PreferencesUtils {
     try {
       this.userPreferences.putSync(key, value)
       await this.userPreferences.flush()
+      Log.d(this.TAG, `put ${key} value finish`)
     } catch (err) {
-      console.log(`put value to preferences error`)
+      Log.d(this.TAG, `put ${key} value error ${json.stringify(err)}`)
     }
   }
 
@@ -32,8 +37,16 @@ export default class PreferencesUtils {
     try {
       value = this.userPreferences.getSync(key, defaultValue) as T
     } catch (e) {
-      console.log(`get value from preferences error`)
+      Log.d(this.TAG, `get ${key} value error ${JSON.stringify(e)}`)
     }
     return value ?? defaultValue
+  }
+
+  delete(key: string) {
+    try {
+      this.userPreferences.deleteSync(key)
+    } catch(err) {
+      Log.d(this.TAG, `delete ${key} value error ${JSON.stringify(err)}`)
+    }
   }
 }
